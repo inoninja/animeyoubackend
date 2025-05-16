@@ -2,21 +2,30 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
 const Product = require('../models/Product');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
-    cb(null, 'uploads/');
-  },
-  filename: function(req, file, cb) {
-    cb(null, `${Date.now()}-${file.originalname}`);
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+// Configure multer for Cloudinary uploads
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'anime-you-products',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif'],
+    transformation: [{ width: 500, height: 500, crop: 'limit' }]
   }
 });
 
 const upload = multer({ storage: storage });
 
-// Get all products
+// Get all products (unchanged)
 router.get('/products', async (req, res) => {
   try {
     const products = await Product.find({});
@@ -26,7 +35,7 @@ router.get('/products', async (req, res) => {
   }
 });
 
-// Get single product
+// Get single product (unchanged)
 router.get('/products/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -39,7 +48,7 @@ router.get('/products/:id', async (req, res) => {
   }
 });
 
-// Create new product
+// Create new product with Cloudinary integration
 router.post('/products', upload.single('image'), async (req, res) => {
   try {
     const { name, description, price, category, subcategory, countInStock } = req.body;
@@ -67,7 +76,7 @@ router.post('/products', upload.single('image'), async (req, res) => {
   }
 });
 
-// Update product route
+// Update product route with Cloudinary
 router.put('/products/:id', upload.single('image'), async (req, res) => {
   try {
     const productId = req.params.id;
@@ -106,7 +115,7 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
   }
 });
 
-// Delete product
+// Delete product (unchanged)
 router.delete('/products/:id', async (req, res) => {
   try {
     const product = await Product.findByIdAndDelete(req.params.id);
