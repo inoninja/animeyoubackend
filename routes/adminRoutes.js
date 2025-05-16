@@ -49,14 +49,14 @@ router.post('/products', upload.single('image'), async (req, res) => {
       return res.status(400).json({ message: 'Image is required' });
     }
     
-    // Create new product
+    // Create new product with Cloudinary URL
     const product = new Product({
       name,
       description,
       price,
       category,
       subcategory,
-      image: `/uploads/${req.file.filename}`,
+      image: req.file.path, // Cloudinary URL is stored here
       countInStock
     });
     
@@ -82,8 +82,8 @@ router.put('/products/:id', upload.single('image'), async (req, res) => {
 
     // Handle image updates
     if (req.file) {
-      // If a new file was uploaded
-      updateData.image = `/uploads/${req.file.filename}`;
+      // If a new file was uploaded to Cloudinary
+      updateData.image = req.file.path;
     } else if (req.body.imageUrl) {
       // If keeping the existing image
       updateData.image = req.body.imageUrl;

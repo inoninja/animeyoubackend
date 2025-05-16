@@ -2,6 +2,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const cors = require('cors');
+const cloudinary = require('cloudinary').v2;
 const adminRoutes = require('./routes/adminRoutes');
 
 // Load env vars
@@ -9,6 +10,13 @@ dotenv.config();
 
 // Connect to database
 connectDB();
+
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 const app = express();
 
@@ -23,6 +31,9 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Since we're using Cloudinary, we don't need local uploads
+// but we can keep it for backward compatibility if needed
 app.use('/uploads', express.static('uploads'));
 
 // Routes
