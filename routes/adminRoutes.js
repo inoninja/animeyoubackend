@@ -3,11 +3,21 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const Product = require('../models/Product');
+const fs = require('fs');
+const path = require('path');
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
-    cb(null, 'uploads/');
+    const uploadPath = path.join(__dirname, '../uploads/');
+    
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(uploadPath)) {
+      console.log('Creating uploads directory');
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    
+    cb(null, uploadPath);
   },
   filename: function(req, file, cb) {
     cb(null, `${Date.now()}-${file.originalname}`);
