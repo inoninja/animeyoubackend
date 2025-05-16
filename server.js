@@ -3,7 +3,6 @@ const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 const cors = require('cors');
 const adminRoutes = require('./routes/adminRoutes');
-const path = require('path');
 
 // Load env vars
 dotenv.config();
@@ -24,11 +23,7 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Set up static file serving with environment variable support
-const uploadPath = process.env.UPLOAD_PATH || path.join(__dirname, 'uploads');
-console.log('Serving static files from:', uploadPath);
-app.use('/uploads', express.static(uploadPath));
+app.use('/uploads', express.static('uploads'));
 
 // Routes
 app.use('/api/products', require('./routes/productRoutes'));
