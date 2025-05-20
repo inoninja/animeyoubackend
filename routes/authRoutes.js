@@ -69,17 +69,16 @@ router.post('/login', async (req, res) => {
     }
     
     // Generate token
+    // In login route - update to match registration route
     const token = jwt.sign(
       { 
         id: user._id,
-        isAdmin: user.role === 'admin' // Convert role to isAdmin boolean
+        isAdmin: user.role === 'admin'
       }, 
       process.env.JWT_SECRET, 
-      {
-        expiresIn: '30d'
-      }
+      { expiresIn: '30d' }
     );
-    
+
     res.json({
       _id: user._id,
       firstName: user.firstName,
