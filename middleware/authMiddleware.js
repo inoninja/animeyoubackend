@@ -25,6 +25,16 @@ const protect = asyncHandler(async (req, res, next) => {
         };
         return next();
       }
+      
+      // Special case for guest users
+      if (token === 'guest-token' || token === 'null' || token === 'undefined') {
+        req.user = {
+          _id: 'guest-id',
+          isGuest: true,
+          isAdmin: false
+        };
+        return next();
+      }
 
       // For regular tokens, verify with JWT
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -32,7 +42,8 @@ const protect = asyncHandler(async (req, res, next) => {
       // Instead of looking up the user in the database, just use token data
       req.user = {
         _id: decoded.id,
-        isAdmin: decoded.isAdmin || false
+        isAdmin: decoded.isAdmin || false,
+        isGuest: false
       };
       
       next();
