@@ -1,7 +1,8 @@
 // In middleware/authMiddleware.js
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
-const User = require('../models/userModel');
+// Comment out or remove this line since we're handling admin-token specially
+// const User = require('../models/userModel');
 
 const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -25,9 +26,14 @@ const protect = asyncHandler(async (req, res, next) => {
         return next();
       }
 
-      // Regular JWT verification for real tokens
+      // For normal tokens, verify with JWT
+      // We'll skip the database lookup for now since we don't have userModel
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
+      req.user = {
+        _id: decoded.id,
+        isAdmin: decoded.isAdmin || false
+      };
+      
       next();
     } catch (error) {
       console.error('Authentication error:', error);
