@@ -57,12 +57,13 @@ const createAdminUser = async () => {
       await User.create({
         firstName: 'Admin',
         lastName: 'User',
-        email: 'admin@animeyou.com',
-        password: 'Admin123!', // Use a stronger password in production
+        email: 'admin',  // Changed from admin@animeyou.com
+        password: 'admin', // Changed from Admin123!
         role: 'admin'
       });
       console.log('Admin user created');
     }
+
   } catch (error) {
     console.error('Error creating admin user:', error);
   }
