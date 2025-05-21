@@ -33,11 +33,11 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// Get logged in user's orders - MOVED ABOVE the /:id route
+// Get logged in user's orders - THIS MUST COME BEFORE THE :id ROUTE
 router.get('/myorders', protect, async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
-                            .sort({ createdAt: -1 }); // Newest first
+                              .sort({ createdAt: -1 }); // Newest first
     res.json(orders);
   } catch (error) {
     console.error('Error fetching user orders:', error);
@@ -45,7 +45,7 @@ router.get('/myorders', protect, async (req, res) => {
   }
 });
 
-// Get order by ID
+// Get order by ID - THIS MUST COME AFTER MORE SPECIFIC ROUTES
 router.get('/:id', protect, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate('user', 'name email');
