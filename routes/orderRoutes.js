@@ -56,10 +56,12 @@ router.get('/:id', protect, async (req, res) => {
 // Get logged in user's orders
 router.get('/myorders', protect, async (req, res) => {
   try {
-    const orders = await Order.find({ user: req.user._id });
+    const orders = await Order.find({ user: req.user._id })
+                              .sort({ createdAt: -1 }); // Newest first
     res.json(orders);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
