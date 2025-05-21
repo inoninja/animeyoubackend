@@ -50,4 +50,30 @@ router.put('/profile', protect, async (req, res) => {
   }
 });
 
+// Add this new endpoint for updating just the address
+router.put('/update-address', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    if (user) {
+      user.address = req.body.address || user.address;
+      
+      const updatedUser = await user.save();
+      
+      res.json({
+        _id: updatedUser._id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        address: updatedUser.address
+      });
+    } else {
+      res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
