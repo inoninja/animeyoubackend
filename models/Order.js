@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-  userId: {
+  user: {  // Changed from userId to user to match what orderRoutes.js sets
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'User'
@@ -23,12 +23,13 @@ const orderSchema = new mongoose.Schema({
   shippingAddress: {
     street: { type: String, required: true },
     city: { type: String, required: true },
-    province: { type: String, required: true },
-    postalCode: { type: String, required: false }
+    state: { type: String, required: true },  // Changed from province to state to match frontend data
+    postalCode: { type: String, required: false },
+    country: { type: String, default: 'Philippines' }  // Added default country
   },
   paymentMethod: {
     type: String,
-    default: 'cash on delivery'  // Making it optional with a default
+    default: 'cash on delivery'
   },
   totalAmount: {
     type: Number,
@@ -52,7 +53,7 @@ const orderSchema = new mongoose.Schema({
     default: Date.now
   }
 }, {
-  timestamps: true  // Adds createdAt and updatedAt automatically
+  timestamps: true
 });
 
 module.exports = mongoose.model('Order', orderSchema);
