@@ -33,6 +33,18 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
+// Get logged in user's orders - MOVED ABOVE the /:id route
+router.get('/myorders', protect, async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user._id })
+                            .sort({ createdAt: -1 }); // Newest first
+    res.json(orders);
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Get order by ID
 router.get('/:id', protect, async (req, res) => {
   try {
@@ -50,18 +62,6 @@ router.get('/:id', protect, async (req, res) => {
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
-
-// Get logged in user's orders
-router.get('/myorders', protect, async (req, res) => {
-  try {
-    const orders = await Order.find({ user: req.user._id })
-                              .sort({ createdAt: -1 }); // Newest first
-    res.json(orders);
-  } catch (error) {
-    console.error('Error fetching user orders:', error);
-    res.status(500).json({ message: 'Server error' });
   }
 });
 
