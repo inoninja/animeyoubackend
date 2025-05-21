@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-  user: {  // Changed from userId to user to match what orderRoutes.js sets
+  user: {  // Changed from userId as per previous update
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'User'
@@ -21,11 +21,13 @@ const orderSchema = new mongoose.Schema({
     }
   ],
   shippingAddress: {
-    street: { type: String, required: true },
+    addressLine1: { type: String, required: true },  // Matches Address.jsx
+    addressLine2: { type: String },  // Optional in Address.jsx
     city: { type: String, required: true },
-    state: { type: String, required: true },  // Changed from province to state to match frontend data
-    postalCode: { type: String, required: false },
-    country: { type: String, default: 'Philippines' }  // Added default country
+    state: { type: String, required: true },  // Matches the "state" field in Address.jsx
+    zip: { type: String, required: true },  // Matches the "zip" field in Address.jsx
+    country: { type: String, required: true, default: 'Philippines' },
+    telephone: { type: String, required: true }
   },
   paymentMethod: {
     type: String,
