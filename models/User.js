@@ -2,24 +2,45 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs'); // For password hashing
 
-const userSchema = new mongoose.Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  role: { 
-    type: String, 
-    enum: ['admin', 'user', 'guest'],
-    default: 'user'
+// In your User.js model
+const userSchema = mongoose.Schema({
+  firstName: {
+    type: String,
+    required: true
+  },
+  lastName: {
+    type: String,
+    required: true
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+  phone: {  // Add phone field
+    type: String,
+    default: ''
   },
   address: {
-    street: String,
+    addressLine1: String,
+    addressLine2: String,
     city: String,
     state: String,
-    postalCode: String,
-    country: String
+    zip: String,
+    country: String,
+    telephone: String
   },
-  createdAt: { type: Date, default: Date.now }
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user'
+  }
+}, {
+  timestamps: true  // This adds createdAt and updatedAt fields
 });
 
 // Method to compare passwords
