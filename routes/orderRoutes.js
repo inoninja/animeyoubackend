@@ -1,91 +1,110 @@
 // server/routes/orderRoutes.js
 const express = require('express');
 const router = express.Router();
-const mongoose = require('mongoose');
 const Order = require('../models/Order');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, admin } = require('../middleware/authMiddleware');
 
 // Create new order
 router.post('/', protect, async (req, res) => {
   try {
-    const {
-      products, // From frontend checkout page
-      shippingAddress,
-      paymentMethod = 'cash on delivery', // Default value if not provided
-      totalAmount // From frontend checkout page
+    const { 
+      orderItems, 
+      shippingAddress, 
+      paymentMethod, 
+      itemsPrice, 
+      taxPrice, 
+      shippingPrice, 
+      totalPrice 
     } = req.body;
 
-    if (!products || products.length === 0) {
+    if (!orderItems || orderItems.length === 0) {
       return res.status(400).json({ message: 'No order items' });
     }
 
-    // Map products from frontend to orderItems format expected by Order model
-    const orderItems = products.map(product => ({
-      name: product.name,
-      qty: product.quantity, // Convert quantity to qty
-      image: product.image,
-      price: product.price,
-      product: product.productId // Convert productId to product
-    }));
-
     const order = new Order({
-      orderItems,
       user: req.user._id,
-      shippingAddress: {
-        street: shippingAddress.street || '',
-        city: shippingAddress.city || '',
-        state: shippingAddress.state || '',
-        postalCode: shippingAddress.postalCode || '',
-        country: shippingAddress.country || 'Philippines' // Default country
-      },
+      orderItems,
+      shippingAddress,
       paymentMethod,
-      totalPrice: totalAmount, // Convert totalAmount to totalPrice
-      status: 'processing' // Initial status
+      itemsPrice,
+      taxPrice,
+      shippingPrice,
+      totalPrice,
+      status: 'pending'
     });
 
     const createdOrder = await order.save();
     res.status(201).json(createdOrder);
   } catch (error) {
-    console.error('Order creation error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('Create order error:', error);
+    res.status(500).json({ message: 'Failed to create order', error: error.message });
   }
 });
 
-// Get logged in user's orders
+// Get all user orders
 router.get('/myorders', protect, async (req, res) => {
   try {
-    // Check if the user is a guest user with a non-ObjectId ID
-    if (req.user._id === 'guest-id' || !mongoose.Types.ObjectId.isValid(req.user._id)) {
-      // Return empty array for guest users or invalid IDs
-      return res.json([]);
-    }
-
-    const orders = await Order.find({ user: req.user._id })
-                            .sort({ createdAt: -1 }); // Newest first
+    const orders = await Order.find({ user: req.user._id });
     res.json(orders);
   } catch (error) {
-    console.error('Error fetching user orders:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Get my orders error:', error);
+    res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
   }
 });
 
 // Get order by ID
 router.get('/:id', protect, async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate('user', 'name email');
+    const order = await Order.findById(req.orderId).populate('user', 'name email');
     
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
     }
-    
-    // Make sure users can only see their own orders
+
+    // Check if the order belongs to the logged-in user or if user is admin
     if (order.user._id.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-      return res.status(401).json({ message: 'Not authorized' });
+      return res.status(401).json({ message: 'Not authorized to view this order' });
     }
-    
+
     res.json(order);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Get order error:', error);
+    res.status(500).json({ message: 'Failed to fetch order', error: error.message });
+  }
+});
+
+// Update order to paid
+router.put('/:id/pay', protect, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Only allow the user who placed the order or an admin to update payment
+    if (order.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized to update this order' });
+    }
+
+    order.isPaid = true;
+    order.paidAt = Date.now();
+    
+    // If we're using a payment processor, we would include payment result details
+    if (req.body.paymentResult) {
+      order.paymentResult = {
+        id: req.body.paymentResult.id,
+        status: req.body.paymentResult.status,
+        update_time: req.body.paymentResult.update_time,
+        email_address: req.body.paymentResult.payer?.email_address
+      };
+    }
+
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error('Update payment error:', error);
+    res.status(500).json({ message: 'Failed to update payment', error: error.message });
   }
 });
 
@@ -97,12 +116,12 @@ router.put('/:id/status', protect, async (req, res) => {
     if (!status) {
       return res.status(400).json({ message: 'Status is required' });
     }
-    
+
     // Verify user is admin
     if (req.user.role !== 'admin') {
       return res.status(401).json({ message: 'Not authorized as admin' });
     }
-    
+
     const order = await Order.findById(req.params.id);
     
     if (!order) {
@@ -111,14 +130,64 @@ router.put('/:id/status', protect, async (req, res) => {
     
     order.status = status;
     
+    // If status is "delivered", update delivered status
     if (status === 'delivered') {
+      order.isDelivered = true;
       order.deliveredAt = Date.now();
     }
     
     const updatedOrder = await order.save();
     res.json(updatedOrder);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Update status error:', error);
+    res.status(500).json({ message: 'Failed to update status', error: error.message });
+  }
+});
+
+// Add alternate endpoint for status update to support both formats
+router.put('/status/:id', protect, async (req, res) => {
+  try {
+    const { status } = req.body;
+    
+    if (!status) {
+      return res.status(400).json({ message: 'Status is required' });
+    }
+
+    // Verify user is admin
+    if (req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized as admin' });
+    }
+
+    const order = await Order.findById(req.params.id);
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    
+    order.status = status;
+    
+    // If status is "delivered", update delivered status
+    if (status === 'delivered') {
+      order.isDelivered = true;
+      order.deliveredAt = Date.now();
+    }
+    
+    const updatedOrder = await order.save();
+    res.json(updatedOrder);
+  } catch (error) {
+    console.error('Update status error:', error);
+    res.status(500).json({ message: 'Failed to update status', error: error.message });
+  }
+});
+
+// Get all orders (admin only)
+router.get('/', protect, admin, async (req, res) => {
+  try {
+    const orders = await Order.find({}).populate('user', 'id name email');
+    res.json(orders);
+  } catch (error) {
+    console.error('Get all orders error:', error);
+    res.status(500).json({ message: 'Failed to fetch orders', error: error.message });
   }
 });
 

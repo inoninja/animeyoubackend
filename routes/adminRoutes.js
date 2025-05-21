@@ -137,7 +137,6 @@ router.delete('/products/:id', async (req, res) => {
   }
 });
 
-// server/routes/adminRoutes.js - Add user management routes
 // Only admins can get all users
 router.get('/users', admin, async (req, res) => {
   try {
