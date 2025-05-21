@@ -45,7 +45,7 @@ app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
-
+app.use('/api/users', require('./routes/userRoutes')); // Add this line
 
 // Update your admin routes to use authentication middleware
 const { protect, admin } = require('./middleware/authMiddleware');
