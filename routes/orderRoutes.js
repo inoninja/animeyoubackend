@@ -1,6 +1,7 @@
 // server/routes/orderRoutes.js
 const express = require('express');
 const router = express.Router();
+const mongoose = require('mongoose'); // Add this import
 const Order = require('../models/Order');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -33,11 +34,18 @@ router.post('/', protect, async (req, res) => {
   }
 });
 
-// Get logged in user's orders - THIS MUST COME BEFORE THE :id ROUTE
+
+// Get logged in user's orders
 router.get('/myorders', protect, async (req, res) => {
   try {
+    // Check if the user is a guest user with a non-ObjectId ID
+    if (req.user._id === 'guest-id' || !mongoose.Types.ObjectId.isValid(req.user._id)) {
+      // Return empty array for guest users or invalid IDs
+      return res.json([]);
+    }
+
     const orders = await Order.find({ user: req.user._id })
-                              .sort({ createdAt: -1 }); // Newest first
+                            .sort({ createdAt: -1 }); // Newest first
     res.json(orders);
   } catch (error) {
     console.error('Error fetching user orders:', error);
@@ -45,7 +53,7 @@ router.get('/myorders', protect, async (req, res) => {
   }
 });
 
-// Get order by ID - THIS MUST COME AFTER MORE SPECIFIC ROUTES
+// Get order by ID (MOVED DOWN)
 router.get('/:id', protect, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id).populate('user', 'name email');
