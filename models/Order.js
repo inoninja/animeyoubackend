@@ -2,18 +2,18 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-  user: {
+  userId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'User'
   },
-  orderItems: [
+  products: [
     {
       name: { type: String, required: true },
-      qty: { type: Number, required: true },
+      quantity: { type: Number, required: true },
       image: { type: String, required: true },
       price: { type: Number, required: true },
-      product: {
+      productId: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'Product'
@@ -23,15 +23,14 @@ const orderSchema = new mongoose.Schema({
   shippingAddress: {
     street: { type: String, required: true },
     city: { type: String, required: true },
-    state: { type: String, required: true },
-    postalCode: { type: String, required: true },
-    country: { type: String, required: true }
+    province: { type: String, required: true },
+    postalCode: { type: String, required: false }
   },
   paymentMethod: {
     type: String,
-    required: true
+    default: 'cash on delivery'  // Making it optional with a default
   },
-  totalPrice: {
+  totalAmount: {
     type: Number,
     required: true,
     default: 0.0
@@ -45,13 +44,15 @@ const orderSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['cart', 'processing', 'shipped', 'delivered', 'cancelled'],
-    default: 'processing'
+    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+    default: 'pending'
   },
   createdAt: {
     type: Date,
     default: Date.now
   }
+}, {
+  timestamps: true  // Adds createdAt and updatedAt automatically
 });
 
 module.exports = mongoose.model('Order', orderSchema);
