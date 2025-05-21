@@ -2,18 +2,18 @@
 const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
-  user: {  // Changed from userId to user to match what orderRoutes.js sets
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'User'
   },
-  products: [
+  orderItems: [  // Changed from products to orderItems
     {
       name: { type: String, required: true },
-      quantity: { type: Number, required: true },
+      qty: { type: Number, required: true },  // Changed from quantity to qty
       image: { type: String, required: true },
       price: { type: Number, required: true },
-      productId: {
+      product: {  // Changed from productId to product
         type: mongoose.Schema.Types.ObjectId,
         required: true,
         ref: 'Product'
@@ -23,15 +23,15 @@ const orderSchema = new mongoose.Schema({
   shippingAddress: {
     street: { type: String, required: true },
     city: { type: String, required: true },
-    state: { type: String, required: true },  // Changed from province to state to match frontend data
+    state: { type: String, required: true },
     postalCode: { type: String, required: false },
-    country: { type: String, default: 'Philippines' }  // Added default country
+    country: { type: String, default: 'Philippines' }
   },
   paymentMethod: {
     type: String,
     default: 'cash on delivery'
   },
-  totalAmount: {
+  totalPrice: {  // Changed from totalAmount to totalPrice
     type: Number,
     required: true,
     default: 0.0
@@ -48,12 +48,11 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
     default: 'pending'
   },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  deliveredAt: {  // Added field used in orderRoutes.js
+    type: Date
   }
 }, {
-  timestamps: true
+  timestamps: true  // This will maintain createdAt
 });
 
 module.exports = mongoose.model('Order', orderSchema);
